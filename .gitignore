@@ -1,0 +1,50 @@
+# Environnements Python/Conda
+rag-chatbot-en/
+rag-chatbot-env/
+venv/
+env/
+ENV/
+*.env
+
+# Données utilisateur
+data/raw/*
+data/processed/*
+data/vectordb/*
+
+# Garder la structure des dossiers
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/vectordb/.gitkeep
+
+# Logs
+logs/*
+!logs/.gitkeep
+*.log
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Fichiers temporaires
+*.pyc
+.env_info
+-p
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Tests temporaires (optionnel - garde si tu veux)
+test_complet_integre.py
+diagnose.py
