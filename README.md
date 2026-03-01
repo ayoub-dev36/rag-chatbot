@@ -1,550 +1,448 @@
-# 🤖 RAG Local Chatbot
-
 <div align="center">
+
+# RAG Local Chatbot
 
 **Système de Question-Réponse Intelligent basé sur vos Documents**
 
-![Python](https://img.shields.io/badge/Python-3.10-blue)
-![LangChain](https://img.shields.io/badge/LangChain-0.1.20-green)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111.0-teal)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.34.0-red)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+[![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![LangChain](https://img.shields.io/badge/LangChain-0.1.16-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white)](https://python.langchain.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109.0-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.29.0-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Ollama](https://img.shields.io/badge/Ollama-LLaMA_3-black?style=for-the-badge)](https://ollama.ai/)
+[![FAISS](https://img.shields.io/badge/FAISS-1.7.4-0467DF?style=for-the-badge&logo=meta&logoColor=white)](https://github.com/facebookresearch/faiss)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-*Chatbot RAG 100% local utilisant LangChain, LLaMA et FAISS*
+*Chatbot RAG 100% local — aucune donnée envoyée dans le cloud*
 
-[Fonctionnalités](#-fonctionnalités) • [Architecture](#-architecture) • [Installation](#-installation) • [Utilisation](#-utilisation) • [Documentation](#-documentation)
+[Architecture](#-architecture) • [Installation](#-installation) • [Utilisation](#-utilisation) • [API](#-api-endpoints) • [Pipeline](#-pipeline-rag)
 
 </div>
 
 ---
 
-## 📋 Table des matières
+## Table des matières
 
 - [À propos](#-à-propos)
-- [Fonctionnalités](#-fonctionnalités)
 - [Architecture](#-architecture)
-- [Technologies utilisées](#-technologies-utilisées)
+- [Stack technique](#-stack-technique)
+- [Pipeline RAG](#-pipeline-rag)
+- [Structure du projet](#-structure-du-projet)
 - [Prérequis](#-prérequis)
 - [Installation](#-installation)
 - [Configuration](#-configuration)
 - [Utilisation](#-utilisation)
-- [Structure du projet](#-structure-du-projet)
-- [Pipeline RAG](#-pipeline-rag)
 - [API Endpoints](#-api-endpoints)
 - [Dépannage](#-dépannage)
-- [Contribution](#-contribution)
 - [Licence](#-licence)
 
 ---
 
-## 🎯 À propos
+## À propos
 
-**RAG Local Chatbot** est un système de Question-Réponse intelligent qui permet d'interroger vos documents (PDF, DOCX, HTML, PPTX, TXT) en langage naturel. Contrairement aux solutions cloud, ce chatbot fonctionne **100% en local**, garantissant la confidentialité de vos données.
+**RAG Local Chatbot** est un système de Question-Réponse (QA) basé sur l'architecture **Retrieval-Augmented Generation**. Il permet d'interroger vos propres documents en langage naturel, avec des réponses précises et sourcées, sans jamais envoyer vos données vers un serveur externe.
 
-### Cas d'usage
+**Formats supportés :** PDF · DOCX · HTML · PPTX · TXT
 
-- 📚 **Documentation d'entreprise** : Interrogez votre base de connaissances
-- 🎓 **Éducation** : Posez des questions sur vos cours et supports de formation
-- 📊 **Analyse de documents** : Extrayez rapidement des informations de rapports
-- 🔍 **Recherche** : Explorez des corpus documentaires volumineux
-
----
-
-## ✨ Fonctionnalités
-
-### 🚀 Fonctionnalités principales
-
-- ✅ **100% Local** : Aucune donnée envoyée vers le cloud
-- ✅ **Multi-formats** : Support PDF, DOCX, HTML, PPTX, TXT
-- ✅ **Interface moderne** : UI Streamlit élégante avec thème sombre
-- ✅ **API REST** : FastAPI pour intégration facile
-- ✅ **RAG optimisé** : Chunking intelligent, embeddings locaux, FAISS
-- ✅ **Anti-hallucination** : Réponses strictement basées sur vos documents
-- ✅ **Sources citées** : Traçabilité complète des réponses
-- ✅ **Scalable** : Architecture modulaire et extensible
-
-### 🎨 Interface utilisateur
-
-- 🌑 Thème sombre professionnel
-- 📤 Upload par drag & drop
-- 💬 Chat interactif avec historique
-- 📚 Affichage des sources
-- 📊 Tableau de bord en temps réel
-- 🔄 Indexation en un clic
+**Points forts :**
+- 100% local — LLM, embeddings et index vectoriel tournent sur votre machine
+- Anti-hallucination — le modèle répond uniquement à partir du contenu de vos documents
+- Sources citées — chaque réponse indique le document et la page d'origine
+- Interface double — UI Streamlit pour les utilisateurs, REST API pour les intégrations
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
-### Vue d'ensemble
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    INTERFACE STREAMLIT                      │
-│              (Port 8501 - Frontend Web)                     │
-└────────────────────────┬────────────────────────────────────┘
-                         │ HTTP
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      API FASTAPI                            │
-│              (Port 8000 - Backend REST)                     │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    PIPELINE RAG                             │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   Loader    │→ │   Cleaner    │→ │   Chunker    │      │
-│  └─────────────┘  └──────────────┘  └──────────────┘      │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ Embeddings  │→ │    FAISS     │→ │  Retriever   │      │
-│  └─────────────┘  └──────────────┘  └──────────────┘      │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │    LLM      │→ │  RAG Chain   │→ │   Response   │      │
-│  │  (LLaMA)    │  │              │  │   + Sources  │      │
-│  └─────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Flux de données
+### Vue d'ensemble du système
 
 ```
-Upload → Loader → Cleaner → Chunker → Embeddings → FAISS Index
-                                                        ↓
-Question → Embedding → FAISS Search → Retriever → Prompt + Context → LLM → Réponse
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          COUCHE PRÉSENTATION                            │
+│                                                                         │
+│   ┌──────────────────────────┐        ┌──────────────────────────┐     │
+│   │     Streamlit UI         │        │      FastAPI REST         │     │
+│   │     Port 8501            │◄──────►│      Port 8000            │     │
+│   │  (Interface utilisateur) │  HTTP  │  (Backend / API)          │     │
+│   └──────────────────────────┘        └────────────┬─────────────┘     │
+└────────────────────────────────────────────────────│────────────────────┘
+                                                     │
+┌────────────────────────────────────────────────────▼────────────────────┐
+│                           COUCHE RAG                                    │
+│                                                                         │
+│   ┌────────────┐    ┌────────────┐    ┌────────────┐    ┌───────────┐  │
+│   │  Document  │───►│   Text     │───►│   Text     │───►│ Embedding │  │
+│   │  Loader    │    │  Cleaner   │    │  Splitter  │    │  Model    │  │
+│   │            │    │            │    │ chunk=300  │    │ MiniLM-L6 │  │
+│   └────────────┘    └────────────┘    └────────────┘    └─────┬─────┘  │
+│                                                               │         │
+│   ┌────────────┐    ┌────────────┐    ┌────────────┐    ┌─────▼─────┐  │
+│   │  Response  │◄───│  LLaMA 3   │◄───│  Prompt    │◄───│   FAISS   │  │
+│   │ + Sources  │    │  (Ollama)  │    │  Template  │    │  Search   │  │
+│   └────────────┘    └────────────┘    └────────────┘    └───────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+                                                     │
+┌────────────────────────────────────────────────────▼────────────────────┐
+│                         COUCHE STOCKAGE                                 │
+│                                                                         │
+│   ┌──────────────────┐    ┌──────────────────┐    ┌────────────────┐   │
+│   │   data/raw/      │    │  FAISS Index     │    │  Ollama Model  │   │
+│   │   (documents     │    │  data/vectordb/  │    │  llama3 (4GB)  │   │
+│   │    originaux)    │    │  (vecteurs 384d) │    │                │   │
+│   └──────────────────┘    └──────────────────┘    └────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Flux de données détaillé
+
+```
+╔══════════════════════════════════════════════════════════════════════════╗
+║                     PHASE 1 — INDEXATION DES DOCUMENTS                  ║
+╠══════════════════════════════════════════════════════════════════════════╣
+║                                                                          ║
+║   Documents (PDF/DOCX/HTML/PPTX/TXT)                                    ║
+║        │                                                                 ║
+║        ▼                                                                 ║
+║   [Document Loader]  ──  PyPDF · python-docx · BeautifulSoup · pptx    ║
+║        │                                                                 ║
+║        ▼                                                                 ║
+║   [Text Cleaner]     ──  Normalisation Unicode, suppression bruit       ║
+║        │                                                                 ║
+║        ▼                                                                 ║
+║   [Text Splitter]    ──  RecursiveCharacterTextSplitter                 ║
+║        │                   chunk_size=300 / overlap=50                   ║
+║        ▼                                                                 ║
+║   [Embedding Model]  ──  sentence-transformers/all-MiniLM-L6-v2        ║
+║        │                   Vecteurs 384 dimensions (CPU/GPU)             ║
+║        ▼                                                                 ║
+║   [FAISS Index]      ──  Stockage local  →  data/vectordb/              ║
+║                                                                          ║
+╠══════════════════════════════════════════════════════════════════════════╣
+║                     PHASE 2 — GÉNÉRATION DE RÉPONSE                     ║
+╠══════════════════════════════════════════════════════════════════════════╣
+║                                                                          ║
+║   Question utilisateur                                                   ║
+║        │                                                                 ║
+║        ▼                                                                 ║
+║   [Embedding Model]  ──  Vectorisation de la question                   ║
+║        │                                                                 ║
+║        ▼                                                                 ║
+║   [FAISS Search]     ──  Recherche par similarité cosinus               ║
+║        │                   top_k=3 chunks les plus pertinents            ║
+║        ▼                                                                 ║
+║   [Prompt Template]  ──  Construction : Context + Question              ║
+║        │                   Anti-hallucination par design                 ║
+║        ▼                                                                 ║
+║   [LLaMA 3 / Ollama] ──  Inférence locale  temperature=0.0             ║
+║        │                   max_tokens=2000                               ║
+║        ▼                                                                 ║
+║   Réponse + Sources citées                                               ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## 🛠️ Technologies utilisées
+## Stack technique
 
-### Core Framework
+### Couche IA & Machine Learning
 
-| Technologie | Version | Utilisation |
-|------------|---------|-------------|
-| **Python** | 3.10 | Langage principal |
-| **LangChain** | 0.1.20 | Framework RAG |
-| **FastAPI** | 0.111.0 | Backend REST API |
-| **Streamlit** | 1.34.0 | Interface utilisateur |
-| **Uvicorn** | 0.29.0 | Serveur ASGI |
+| Composant | Technologie | Version | Rôle |
+|-----------|-------------|---------|------|
+| **LLM** | LLaMA 3 via Ollama | — | Génération de réponses en local |
+| **Embeddings** | `sentence-transformers/all-MiniLM-L6-v2` | ≥ 2.6.0 | Vectorisation texte (384 dim) |
+| **Vector Store** | FAISS (Facebook AI Similarity Search) | 1.7.4 | Index vectoriel haute performance |
+| **RAG Framework** | LangChain (`RetrievalQA`) | 0.1.16 | Orchestration de la chaîne RAG |
+| **HuggingFace** | `langchain-huggingface` | 0.0.1 | Interface modèles embeddings |
 
-### IA & Machine Learning
+### Couche Backend & API
 
-| Technologie | Version | Utilisation |
-|------------|---------|-------------|
-| **Ollama** | 0.1.9 | Runtime LLM local |
-| **LLaMA 3** | - | Modèle de langage |
-| **Sentence Transformers** | 2.7.0 | Embeddings |
-| **FAISS** | 1.8.0 | Base vectorielle |
-| **HuggingFace** | - | Modèles d'embeddings |
+| Composant | Technologie | Version | Rôle |
+|-----------|-------------|---------|------|
+| **API REST** | FastAPI | 0.109.0 | Backend HTTP — endpoints CRUD |
+| **Serveur ASGI** | Uvicorn | 0.27.0 | Serveur async hautes performances |
+| **Validation** | Pydantic | 2.5.3 | Schémas de données & validation |
+| **CORS** | FastAPI Middleware | — | Sécurisation des origines |
 
-### Document Processing
+### Couche Frontend
 
-| Technologie | Version | Utilisation |
-|------------|---------|-------------|
-| **PyPDF** | 4.2.0 | Lecture PDF |
-| **python-docx** | 1.1.0 | Lecture DOCX |
-| **beautifulsoup4** | 4.12.3 | Parsing HTML |
-| **python-pptx** | 0.6.23 | Lecture PPTX |
-| **unstructured** | 0.13.0 | Parsing avancé |
+| Composant | Technologie | Version | Rôle |
+|-----------|-------------|---------|------|
+| **Interface Web** | Streamlit | 1.29.0 | UI interactive (chat, upload, dashboard) |
+| **HTTP Client** | Requests | 2.31.0 | Communication Streamlit → FastAPI |
 
----
+### Couche Document Processing
 
-## 📋 Prérequis
+| Composant | Technologie | Version | Format supporté |
+|-----------|-------------|---------|-----------------|
+| **PDF** | PyPDF | 3.17.4 | `.pdf` |
+| **Word** | python-docx | 1.1.0 | `.docx` |
+| **Web** | BeautifulSoup4 + lxml | 4.12.2 | `.html` |
+| **PowerPoint** | python-pptx | 0.6.23 | `.pptx` |
+| **Texte** | Built-in / unstructured | 0.11.8 | `.txt` |
 
-### Système
+### Environnement & Infrastructure
 
-- **OS** : Windows 10/11, Linux, macOS
-- **RAM** : Minimum 8 GB (16 GB recommandé)
-- **Stockage** : 10 GB d'espace libre
-- **CPU** : Processeur multi-cœurs recommandé
-- **GPU** : Optionnel (accélération CUDA)
-
-### Logiciels
-
-1. **Anaconda ou Miniconda**
-   - Télécharger : [https://www.anaconda.com/download](https://www.anaconda.com/download)
-
-2. **Ollama**
-   - Télécharger : [https://ollama.ai](https://ollama.ai)
-   - Installer le modèle LLaMA 3 : `ollama pull llama3`
-
-3. **Git** (optionnel)
-   - Pour cloner le repository
+| Composant | Technologie | Rôle |
+|-----------|-------------|------|
+| **Runtime** | Python 3.10 | Langage principal |
+| **Env. manager** | Conda / Miniconda | Isolation des dépendances |
+| **LLM Runtime** | Ollama | Exécution locale de LLaMA 3 |
+| **OS** | Windows / Linux / macOS | Multi-plateforme |
 
 ---
 
-## 🚀 Installation
+## Pipeline RAG
 
-### Méthode 1 : Installation automatique (Recommandé)
+### Paramètres du pipeline
 
-#### Windows
+| Paramètre | Valeur | Justification |
+|-----------|--------|---------------|
+| `CHUNK_SIZE` | `300` | Chunks focalisés, précision accrue |
+| `CHUNK_OVERLAP` | `50` | Continuité sémantique entre chunks |
+| `SEARCH_TOP_K` | `3` | Équilibre pertinence / bruit |
+| `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Léger, rapide, 384 dimensions |
+| `LLM_TEMPERATURE` | `0.0` | Réponses déterministes, fiables |
+| `LLM_MAX_TOKENS` | `2000` | Réponses complètes autorisées |
+| `EMBEDDING_DEVICE` | `cpu` | Compatible sans GPU (CUDA optionnel) |
+| `RAG_CHAIN_TYPE` | `stuff` | Contexte injecté en une seule fois |
 
-```batch
-# 1. Cloner le projet
-git clone <votre-repo-url>
-cd LearningLocal
+### Prompt anti-hallucination
 
-# 2. Lancer l'installation automatique
-install_FINAL.bat
+Le système utilise un prompt strict qui contraint le modèle à ne répondre qu'à partir du contexte fourni :
 
-# 3. Télécharger le modèle LLM
-ollama pull llama3
+```
+Réponds à la question en utilisant UNIQUEMENT le contexte fourni.
+
+CONTEXTE: {context}
+QUESTION: {question}
+
+Si la réponse est dans le contexte, réponds clairement.
+Si la réponse n'est PAS dans le contexte, dis: "Information non trouvée."
+
+RÉPONSE:
 ```
 
-#### Linux/macOS
+---
+
+## Structure du projet
+
+```
+rag-chatbot/
+│
+├── app/                          # Code source principal
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── main.py               # FastAPI — endpoints REST (upload, ingest, query, reset)
+│   │
+│   ├── ui/
+│   │   ├── __init__.py
+│   │   └── streamlit_app.py      # Interface Streamlit — chat + dashboard
+│   │
+│   ├── loaders/
+│   │   └── document_loader.py    # Chargement multi-format (PDF, DOCX, HTML, PPTX, TXT)
+│   │
+│   ├── preprocess/
+│   │   └── text_cleaner.py       # Nettoyage et normalisation Unicode
+│   │
+│   ├── chunking/
+│   │   └── text_splitter.py      # RecursiveCharacterTextSplitter (chunk=300, overlap=50)
+│   │
+│   ├── embeddings/
+│   │   └── embedding_model.py    # HuggingFace Embeddings — all-MiniLM-L6-v2
+│   │
+│   ├── vectorstore/
+│   │   └── faiss_store.py        # Création, sauvegarde et chargement de l'index FAISS
+│   │
+│   ├── retriever/
+│   │   └── similarity_search.py  # Recherche par similarité cosinus (top_k=3)
+│   │
+│   ├── llm/
+│   │   └── llama_model.py        # Connexion Ollama — LLaMA 3
+│   │
+│   ├── rag/
+│   │   └── rag_pipeline.py       # RetrievalQA chain — orchestration complète
+│   │
+│   └── prompts/
+│       └── rag_prompt.txt        # Template de prompt optimisé
+│
+├── config/
+│   └── settings.py               # Paramètres globaux (chemins, hyperparamètres)
+│
+├── data/
+│   ├── raw/                      # Documents originaux à indexer
+│   ├── processed/                # Documents pré-traités
+│   └── vectordb/                 # Index FAISS persisté
+│
+├── scripts/
+│   └── ingest.py                 # Script d'indexation en ligne de commande
+│
+├── run.bat                       # Lancement rapide (Windows)
+├── fix_env_final.bat             # Résolution de problèmes d'environnement
+├── kill_processes.bat            # Arrêt propre des services
+├── requirements.txt              # Dépendances Python (versions compatibles testées)
+├── environment.yml               # Configuration environnement Conda
+├── .gitignore
+└── LICENSE
+```
+
+---
+
+## Prérequis
+
+### Matériel recommandé
+
+| Ressource | Minimum | Recommandé |
+|-----------|---------|------------|
+| **RAM** | 8 GB | 16 GB |
+| **Stockage** | 10 GB libres | 20 GB |
+| **CPU** | 4 cœurs | 8 cœurs+ |
+| **GPU** | — (optionnel) | NVIDIA CUDA (embeddings 10x plus rapide) |
+
+### Logiciels requis
+
+1. **Anaconda ou Miniconda** — [télécharger ici](https://www.anaconda.com/download)
+2. **Ollama** — [télécharger ici](https://ollama.ai)
+3. **Git** — pour cloner le dépôt
+
+---
+
+## Installation
+
+### Étape 1 — Cloner le projet
 
 ```bash
-# 1. Cloner le projet
-git clone <votre-repo-url>
-cd LearningLocal
-
-# 2. Rendre les scripts exécutables
-chmod +x *.sh
-
-# 3. Lancer l'installation
-./install_FINAL.sh
-
-# 4. Télécharger le modèle LLM
-ollama pull llama3
+git clone https://github.com/ayoub-dev36/rag-chatbot.git
+cd rag-chatbot
 ```
 
-### Méthode 2 : Installation manuelle
+### Étape 2 — Créer l'environnement Conda
 
 ```bash
-# 1. Créer l'environnement Conda
+# Depuis le fichier environment.yml (recommandé)
+conda env create -f environment.yml
+conda activate rag-chatbot-env
+```
+
+Ou manuellement :
+
+```bash
 conda create -n rag-chatbot-env python=3.10 -y
 conda activate rag-chatbot-env
+pip install -r requirements.txt
+```
 
-# 2. Installer les dépendances
-pip install -r requirements_FINAL.txt
+### Étape 3 — Télécharger le modèle LLM
 
-# 3. Créer la structure des dossiers
-mkdir -p data/raw data/processed data/vectordb logs
+```bash
+# Lancer Ollama
+ollama serve
 
-# 4. Télécharger le modèle LLM
+# Dans un autre terminal, télécharger LLaMA 3
 ollama pull llama3
 ```
 
-### Vérification de l'installation
+### Étape 4 — Vérifier l'installation
 
 ```bash
-# Activer l'environnement
-conda activate rag-chatbot-env
-
-# Tester les imports
-python -c "import langchain, streamlit, fastapi; print('✅ Installation OK')"
-
-# Vérifier Ollama
+python -c "import langchain, streamlit, fastapi, faiss; print('Installation OK')"
 ollama list
 ```
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
-### Fichier `config/settings.py`
-
-Personnalisez les paramètres du système :
+Tous les paramètres sont centralisés dans [config/settings.py](config/settings.py) :
 
 ```python
 # Chunking
-CHUNK_SIZE = 300          # Taille des chunks (caractères)
-CHUNK_OVERLAP = 50        # Chevauchement entre chunks
+CHUNK_SIZE = 300           # Taille des chunks en caractères
+CHUNK_OVERLAP = 50         # Chevauchement entre chunks
 
 # Embeddings
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-EMBEDDING_DEVICE = "cpu"  # ou "cuda" si GPU
+EMBEDDING_DEVICE = "cpu"   # "cuda" si GPU disponible
 
 # FAISS
-SEARCH_TOP_K = 3          # Nombre de documents à récupérer
+SEARCH_TOP_K = 3           # Nombre de chunks récupérés par requête
 
 # LLM
-LLM_MODEL = "llama3"      # Modèle Ollama
-LLM_TEMPERATURE = 0.0     # Créativité (0.0 = déterministe)
-LLM_MAX_TOKENS = 2000     # Longueur max de réponse
-```
+LLM_MODEL = "llama3"
+LLM_TEMPERATURE = 0.0      # 0.0 = déterministe
+LLM_MAX_TOKENS = 2000
 
-### Variables d'environnement (optionnel)
-
-Créez un fichier `.env` :
-
-```bash
-API_HOST=0.0.0.0
-API_PORT=8000
-STREAMLIT_PORT=8501
+# Formats supportés
+SUPPORTED_EXTENSIONS = [".pdf", ".docx", ".html", ".pptx", ".txt"]
 ```
 
 ---
 
-## 🎮 Utilisation
+## Utilisation
 
-### Démarrage rapide
+### Démarrage complet
 
-#### 1. Activer l'environnement
-
-```batch
-conda activate rag-chatbot-env
-```
-
-#### 2. Lancer Ollama (terminal séparé)
-
-```batch
+**Terminal 1 — Ollama :**
+```bash
 ollama serve
 ```
 
-#### 3. Ajouter des documents
-
-Placez vos fichiers dans le dossier `data/raw/` :
-
-```
-data/raw/
-├── cours_python.pdf
-├── rapport_2024.docx
-└── documentation.html
-```
-
-#### 4. Indexer les documents
-
-```batch
-python scripts/ingest_simple.py
-```
-
-**Sortie attendue :**
-```
-✅ INGESTION TERMINÉE
-   • Documents chargés : 3
-   • Chunks créés : 45
-   • Index FAISS : Prêt
-```
-
-#### 5. Lancer l'interface
-
-```batch
-# Windows
+**Terminal 2 — Lancement des services (Windows) :**
+```bash
 run.bat
-
-# Linux/macOS
-./run.sh
 ```
 
-#### 6. Accéder à l'interface
+Ou manuellement :
 
-Ouvrez votre navigateur : **http://localhost:8501**
+```bash
+# Terminal 2 — FastAPI
+conda activate rag-chatbot-env
+uvicorn app.api.main:app --host 0.0.0.0 --port 8000
 
----
-
-## 📁 Structure du projet
-
+# Terminal 3 — Streamlit
+conda activate rag-chatbot-env
+streamlit run app/ui/streamlit_app.py --server.port 8501
 ```
-LearningLocal/
-│
-├── 📂 app/                          # Code source principal
-│   ├── 📂 api/                      # Backend FastAPI
-│   │   ├── __init__.py
-│   │   └── main.py                  # Endpoints REST
-│   │
-│   ├── 📂 ui/                       # Interface Streamlit
-│   │   ├── __init__.py
-│   │   └── streamlit_app.py         # Frontend web
-│   │
-│   ├── 📂 loaders/                  # Chargement documents
-│   │   ├── __init__.py
-│   │   └── document_loader.py       # PyPDF, Docx, HTML, PPTX
-│   │
-│   ├── 📂 preprocess/               # Nettoyage texte
-│   │   ├── __init__.py
-│   │   └── text_cleaner.py          # Normalisation Unicode
-│   │
-│   ├── 📂 chunking/                 # Découpage texte
-│   │   ├── __init__.py
-│   │   └── text_splitter.py         # RecursiveCharacterTextSplitter
-│   │
-│   ├── 📂 embeddings/               # Génération embeddings
-│   │   ├── __init__.py
-│   │   └── embedding_model.py       # HuggingFace Embeddings
-│   │
-│   ├── 📂 vectorstore/              # Base vectorielle
-│   │   ├── __init__.py
-│   │   └── faiss_store.py           # FAISS Index
-│   │
-│   ├── 📂 retriever/                # Recherche sémantique
-│   │   ├── __init__.py
-│   │   └── similarity_search.py     # Similarité cosinus
-│   │
-│   ├── 📂 llm/                      # Modèle de langage
-│   │   ├── __init__.py
-│   │   └── llama_model.py           # Ollama LLaMA
-│   │
-│   ├── 📂 rag/                      # Pipeline RAG
-│   │   ├── __init__.py
-│   │   └── rag_pipeline.py          # RetrievalQA Chain
-│   │
-│   └── 📂 prompts/                  # Templates de prompts
-│       └── rag_prompt.txt           # Prompt optimisé
-│
-├── 📂 config/                       # Configuration
-│   └── settings.py                  # Paramètres globaux
-│
-├── 📂 data/                         # Données
-│   ├── raw/                         # Documents originaux
-│   ├── processed/                   # Documents nettoyés
-│   └── vectordb/                    # Index FAISS
-│
-├── 📂 logs/                         # Fichiers de logs
-│   ├── fastapi.log                  # Logs API
-│   └── streamlit.log                # Logs UI
-│
-├── 📂 scripts/                      # Scripts utilitaires
-│   ├── ingest.py                    # Indexation complète
-│   ├── ingest_simple.py             # Indexation simplifiée
-│   └── chat.py                      # Chat en ligne de commande
-│
-├── 📄 install_FINAL.bat             # Installation Windows
-├── 📄 fix_env_final.bat             # Résolution problèmes
-├── 📄 run.bat                       # Lancement Windows
-├── 📄 kill_processes.bat            # Arrêt processus
-├── 📄 check_ports.bat               # Diagnostic ports
-│
-├── 📄 requirements_FINAL.txt        # Dépendances Python (versions testées)
-├── 📄 environment.yml               # Config environnement Conda
-│
-├── 📄 .gitignore                    # Fichiers à ignorer
-├── 📄 README.md                     # Ce fichier
-└── 📄 LICENSE                       # Licence MIT
+
+**Accès :**
+- Interface utilisateur : http://localhost:8501
+- API REST + documentation : http://localhost:8000/docs
+
+### Workflow standard
+
+1. **Ouvrir** l'interface sur http://localhost:8501
+2. **Uploader** vos documents (glisser-déposer)
+3. **Indexer** en cliquant sur "Indexer les documents"
+4. **Interroger** vos documents en langage naturel
+
+### Indexation en ligne de commande
+
+```bash
+# Placer les documents dans data/raw/
+python scripts/ingest.py
 ```
 
 ---
 
-## 🔄 Pipeline RAG Détaillé
+## API Endpoints
 
-### 1️⃣ Ingestion des documents
+**Base URL :** `http://localhost:8000`
+**Documentation interactive :** http://localhost:8000/docs
 
-```
-Documents bruts (PDF, DOCX, etc.)
-         ↓
-    Loader (PyPDF, python-docx, etc.)
-         ↓
-    Document LangChain
-         ↓
-    Text Cleaner (normalisation Unicode, suppression caractères)
-         ↓
-    Text Splitter (chunks de 300 caractères, overlap 50)
-         ↓
-    Embeddings (sentence-transformers/all-MiniLM-L6-v2)
-         ↓
-    FAISS Index (sauvegardé localement)
-```
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| `GET` | `/` | Statut de l'API |
+| `GET` | `/status` | État du système RAG |
+| `POST` | `/upload` | Upload de documents |
+| `POST` | `/ingest` | Indexation des documents |
+| `POST` | `/query` | Question aux documents |
+| `DELETE` | `/reset` | Réinitialisation complète |
 
-### 2️⃣ Génération de réponse
+### Exemple — Requête `POST /query`
 
-```
-Question utilisateur
-         ↓
-    Embedding de la question
-         ↓
-    FAISS Similarity Search (top_k=3)
-         ↓
-    Documents pertinents récupérés
-         ↓
-    Construction du prompt (Context + Question)
-         ↓
-    LLM (LLaMA 3 via Ollama)
-         ↓
-    Réponse + Sources citées
-```
-
-### Paramètres optimisés
-
-| Paramètre | Valeur | Justification |
-|-----------|--------|---------------|
-| Chunk Size | 300 | Chunks focalisés, moins de bruit |
-| Chunk Overlap | 50 | Continuité sémantique |
-| Top K | 3 | Équilibre pertinence/contexte |
-| Temperature | 0.0 | Réponses déterministes |
-| Max Tokens | 2000 | Réponses détaillées possibles |
-
----
-
-## 🌐 API Endpoints
-
-### Base URL : `http://localhost:8000`
-
-#### `GET /`
-Page d'accueil de l'API
-
-**Réponse :**
-```json
-{
-  "status": "online",
-  "message": "API RAG Local Chatbot opérationnelle",
-  "details": {
-    "version": "1.0.0",
-    "endpoints": ["/upload", "/ingest", "/query", "/status"]
-  }
-}
-```
-
-#### `GET /status`
-Statut du système
-
-**Réponse :**
-```json
-{
-  "status": "ready",
-  "message": "Système prêt",
-  "details": {
-    "index_exists": true,
-    "rag_initialized": true,
-    "files_uploaded": 5,
-    "supported_extensions": [".pdf", ".docx", ".html", ".pptx", ".txt"],
-    "search_top_k": 3
-  }
-}
-```
-
-#### `POST /upload`
-Upload de fichiers
-
-**Body :** `multipart/form-data`
-
-**Réponse :**
-```json
-{
-  "status": "success",
-  "message": "3 fichier(s) uploadé(s)",
-  "details": {
-    "uploaded": ["cours.pdf", "rapport.docx"],
-    "errors": null
-  }
-}
-```
-
-#### `POST /ingest`
-Indexation des documents
-
-**Réponse :**
-```json
-{
-  "status": "success",
-  "message": "Documents indexés avec succès",
-  "details": {
-    "documents_loaded": 10,
-    "chunks_created": 145,
-    "files_processed": 3
-  }
-}
-```
-
-#### `POST /query`
-Question aux documents
-
-**Body :**
-```json
-{
-  "question": "Qu'est-ce que Python ?",
-  "top_k": 3
-}
+```bash
+curl -X POST "http://localhost:8000/query" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Qu'\''est-ce que Python ?", "top_k": 3}'
 ```
 
 **Réponse :**
@@ -553,238 +451,97 @@ Question aux documents
   "answer": "Python est un langage de programmation...",
   "sources": [
     {
-      "source": "cours.pdf",
+      "source": "cours_python.pdf",
       "page": "2",
-      "content": "Python est un langage..."
+      "content": "Python est un langage interprété..."
     }
   ],
   "success": true
 }
 ```
 
-#### `DELETE /reset`
-Réinitialisation du système
-
-**Réponse :**
-```json
-{
-  "status": "success",
-  "message": "Système réinitialisé"
-}
-```
-
 ---
 
-## 🐛 Dépannage
+## Dépannage
 
-### Problème : "API non accessible"
+### "API non accessible"
 
-**Cause :** FastAPI n'est pas lancé
+```bash
+# Vérifier que FastAPI tourne
+curl http://localhost:8000/status
 
-**Solution :**
-```batch
-# Vérifier les processus
-check_ports.bat
-
-# Lancer FastAPI manuellement
-python -m uvicorn app.api.main:app --reload
+# Relancer manuellement
+uvicorn app.api.main:app --host 0.0.0.0 --port 8000
 ```
 
-### Problème : "Ollama non trouvé"
+### "Ollama non trouvé"
 
-**Cause :** Ollama n'est pas installé ou pas lancé
-
-**Solution :**
-```batch
-# Vérifier Ollama
-ollama list
-
-# Lancer le service
-ollama serve
-
-# Télécharger le modèle
-ollama pull llama3
+```bash
+ollama list          # Vérifier les modèles disponibles
+ollama serve         # Démarrer le service
+ollama pull llama3   # Télécharger le modèle si absent
 ```
 
-### Problème : "Index FAISS introuvable"
+### "Index FAISS introuvable"
 
-**Cause :** Documents pas indexés
-
-**Solution :**
-```batch
-# Ajouter des documents dans data/raw/
-# Puis indexer
-python scripts/ingest_simple.py
+```bash
+# Indexer les documents
+python scripts/ingest.py
 ```
 
-### Problème : "Port déjà utilisé"
+### "Port déjà utilisé"
 
-**Cause :** Un processus utilise déjà le port 8000 ou 8501
-
-**Solution :**
-```batch
-# Arrêter les processus
+```bash
+# Windows — arrêt propre des processus
 kill_processes.bat
-
-# Relancer
-run.bat
 ```
 
-### Problème : "Je ne trouve pas cette information"
+### "Problème d'environnement Conda"
 
-**Cause :** Documents pas correctement indexés ou question hors contexte
-
-**Solution :**
-```batch
-# 1. Supprimer l'ancien index
-rmdir /S /Q data\vectordb
-
-# 2. Réindexer
-python scripts/ingest_simple.py
-
-# 3. Vérifier avec le test
-python test_complet_integre.py
-```
-
-### Logs de debug
-
-```batch
-# Voir les logs FastAPI
-type logs\fastapi.log
-
-# Voir les logs Streamlit
-type logs\streamlit.log
+```bash
+# Windows — script de correction automatique
+fix_env_final.bat
 ```
 
 ---
 
-## 🧪 Tests
+## Performances
 
-### Test complet du système
+| Opération | Temps indicatif |
+|-----------|----------------|
+| Chargement de 100 pages PDF | ~10 s |
+| Génération embeddings (100 chunks) | ~5 s (CPU) |
+| Recherche FAISS | < 100 ms |
+| Génération réponse (LLaMA 3) | ~3–5 s |
+| **Query end-to-end** | **~5 s** |
 
-```batch
-python test_complet_integre.py
-```
-
-**Vérifie :**
-- ✅ Chargement documents
-- ✅ Chunking
-- ✅ Embeddings
-- ✅ Index FAISS
-- ✅ LLM Ollama
-- ✅ Pipeline RAG
-- ✅ Questions réelles
-
-### Chat en ligne de commande
-
-```batch
-python scripts/chat.py
-```
+> Avec GPU CUDA : les embeddings sont ~10x plus rapides. Modifier `EMBEDDING_DEVICE = "cuda"` dans `config/settings.py`.
 
 ---
 
-## 🔒 Sécurité et confidentialité
+## Contribution
 
-- ✅ **100% Local** : Aucune donnée envoyée vers des serveurs externes
-- ✅ **Pas d'API externe** : Pas besoin de clés OpenAI, Anthropic, etc.
-- ✅ **Données privées** : Vos documents restent sur votre machine
-- ✅ **Open Source** : Code entièrement auditable
-
----
-
-## 📈 Performances
-
-### Benchmarks (machine standard)
-
-| Opération | Temps moyen |
-|-----------|-------------|
-| Chargement 100 pages PDF | ~10s |
-| Génération embeddings (100 chunks) | ~5s |
-| Recherche FAISS | <100ms |
-| Génération réponse LLM | ~3-5s |
-| **Total query end-to-end** | **~5s** |
-
-### Optimisations possibles
-
-- 🚀 **GPU** : Utilisez CUDA pour les embeddings (10x plus rapide)
-- 🚀 **FAISS GPU** : Recherche vectorielle accélérée
-- 🚀 **Batch processing** : Indexation par lots
-- 🚀 **Modèles quantifiés** : LLM plus légers (GGUF, GGML)
+1. Forker le projet
+2. Créer une branche : `git checkout -b feature/ma-fonctionnalite`
+3. Commiter : `git commit -m "feat: description"`
+4. Pousser : `git push origin feature/ma-fonctionnalite`
+5. Ouvrir une Pull Request
 
 ---
 
-## 🤝 Contribution
+## Licence
 
-Les contributions sont les bienvenues !
-
-### Comment contribuer
-
-1. **Fork** le projet
-2. **Créer** une branche (`git checkout -b feature/amelioration`)
-3. **Commit** vos changements (`git commit -m 'Ajout fonctionnalité'`)
-4. **Push** vers la branche (`git push origin feature/amelioration`)
-5. **Ouvrir** une Pull Request
-
-### Guidelines
-
-- Suivre le style de code existant
-- Ajouter des tests pour les nouvelles fonctionnalités
-- Mettre à jour la documentation
-- Tester localement avant de soumettre
-
----
-
-## 📚 Ressources
-
-### Documentation officielle
-
-- [LangChain](https://python.langchain.com/docs/get_started)
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [Streamlit](https://docs.streamlit.io/)
-- [Ollama](https://github.com/ollama/ollama)
-- [FAISS](https://github.com/facebookresearch/faiss)
-
-### Tutoriels et articles
-
-- [Introduction au RAG](https://www.langchain.com/retrieval-augmented-generation)
-- [Sentence Transformers](https://www.sbert.net/)
-- [LLaMA](https://ai.meta.com/llama/)
-
----
-
-## 🙏 Remerciements
-
-- **LangChain** pour le framework RAG
-- **Meta AI** pour LLaMA
-- **Ollama** pour le runtime LLM local
-- **Facebook Research** pour FAISS
-- **HuggingFace** pour les modèles d'embeddings
-- **FastAPI** et **Streamlit** pour les interfaces
-
----
-
-## 📄 Licence
-
-Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
-
----
-
-## 📧 Contact
-
-Pour toute question ou suggestion :
-
-- 📧 Email : votre.email@example.com
-- 🐙 GitHub : [@votre-username](https://github.com/ayoub-dev36)
-- 💼 LinkedIn : [Votre Profil](https://www.linkedin.com/in/ayoub-bakkouri-196759250/)
+Ce projet est distribué sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour les détails.
 
 ---
 
 <div align="center">
 
-**Développé avec ❤️ pour la communauté Open Source**
+Développé par **[Ayoub Bakkouri](https://github.com/ayoub-dev36)**
 
-⭐ Si ce projet vous aide, n'hésitez pas à lui donner une étoile sur GitHub !
+[![GitHub](https://img.shields.io/badge/GitHub-ayoub--dev36-181717?style=flat-square&logo=github)](https://github.com/ayoub-dev36)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Ayoub_Bakkouri-0077B5?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/ayoub-bakkouri-196759250/)
 
-[⬆ Retour en haut](#-rag-local-chatbot)
+*Si ce projet vous est utile, n'hésitez pas à lui laisser une étoile.*
 
 </div>
